@@ -1,7 +1,10 @@
 doctype html
 html
   head
-    title= title
-    link(rel='stylesheet', href='/stylesheets/style.css')
+    block head
+      title= title
+      link(rel='stylesheet', href='/stylesheets/style.css')
+      script(src="/javascripts/jquery/jquery-1.10.2.min.js")
+      script(src="/socket.io/socket.io.js")
   body
     block content

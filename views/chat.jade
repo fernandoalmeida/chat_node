@@ -1,0 +1,27 @@
+extends layout
+
+block append head
+  link(rel="stylesheet", href="/stylesheets/chat.css")
+  script(src="/javascripts/chat.js")
+
+block content
+  h1 Chat
+
+  div#fields
+    label(for="user") Username: (Hit Enter) 
+    input#user(type="text", size="30")
+    
+  div#feedback
+ 
+  p
+  div#chat.shadow
+ 
+  p
+  div
+    br
+    table
+      tr
+        td
+          select#users(style="width: 100px")
+        td
+          input#message(type="text", style="width: 600px", disabled="true")
