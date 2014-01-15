@@ -16,9 +16,12 @@
 #chat p {
     font-size: 'verdana, helvetica';
     font-size: 12px;
-    background-color: #eee;
     padding: 2px 5px;
     margin: 2px 5px 2px 0;
+}
+
+#chat p.private {
+    background-color: #eee;
 }
 
 #chat p.notify {

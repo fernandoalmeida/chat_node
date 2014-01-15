@@ -59,11 +59,23 @@ io.sockets.on('connection', function(socket){
 
   // Message
   socket.on('message', function(data){
-    io.sockets.emit('message', {
-      source:  data.source,
-      message: data.message,
-      target:  data.target
-    });
+    if ( data.target == 'all' ) {
+      io.sockets.emit('message', {
+	source:  data.source,
+	message: data.message,
+	target:  data.target
+      });
+    } else {
+      if (!!clients[data.target] && !!io.sockets.sockets[clients[data.target]]) {
+	io.sockets.sockets[clients[data.target]].emit('message', {
+	  source:  data.source,
+	  message: data.message,
+	  target:  data.target
+	});
+      } else {
+	io.sockets.sockets[clients[data.source]].emit('error', {not_found: true, message: "user not found"});
+      }
+    }
   });
 
 });

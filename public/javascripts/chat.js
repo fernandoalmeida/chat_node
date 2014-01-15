@@ -18,19 +18,23 @@ $(document).ready(function(){
   $('#message').keypress(function(e){
     if (e.keyCode == 13) {
       var target = $('#users').val();
+      var message = $(this).val();
       socket.emit('message', {
 	source: user,
 	target: target,
-	message: $(this).val()
+	message: message
       });
       $(this).val("");
+      if ( target != 'all' ) {
+	$('#chat').append("<p class='private'>" + user + ": " + message + "</p>");
+      }
       e.stopPropagation();
       e.preventDefault();
     }
   });
 
   socket.on('welcome', function(data){
-    $("#feedback").html("<span style='color: green'>"+data.message+"</span>");
+    $("#feedback").html("<span style='color: green'>" + data.message + "</span>");
     $('input#message').prop('disabled', false);
     $('input#user').prop('disabled', true);
     var options = "";
@@ -48,11 +52,12 @@ $(document).ready(function(){
   });
 
   socket.on('message', function(data){
-    $('#chat').append('<p>' + data.source + ': ' + data.message + '</p>');
+    var css_class = data.target == 'all' ? 'public' : 'private';
+    $('#chat').append("<p class=" + css_class + ">" + data.source + ": " + data.message + "</p>");
   });
 
   socket.on('error', function(data) {
-    $("#feedback").html("<span style='color: red'>"+data.message+"</span>");
+    $("#feedback").html("<span style='color: red'>" + data.message + "</span>");
   });
 
 });
