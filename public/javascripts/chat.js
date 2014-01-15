@@ -43,6 +43,7 @@ $(document).ready(function(){
   socket.on('joined', function(data){
     if (data.notify && data.user !== user) {
       $('#chat').append('<p class="notify">--> ' + data.user + ' joined</p>');
+      $('#users').append('<option value="' + data.user + '">' + data.user + '</option>');
     }
   });
 
