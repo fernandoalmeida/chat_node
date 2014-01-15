@@ -33,10 +33,14 @@ $(document).ready(function(){
     $("#feedback").html("<span style='color: green'>"+data.message+"</span>");
     $('input#message').prop('disabled', false);
     $('input#user').prop('disabled', true);
+    var options = "";
+    for(var i = 0; i < data.current_users.length; i++) {
+      options += '<option value="' + data.current_users[i] + '">' + data.current_users[i] + '</option>';
+    }
+    $('#users').append(options);
   });
 
   socket.on('joined', function(data){
-    $('#users').append($('<option value="'+data.user+'">'+data.user+'</option>'));
     if (data.notify && data.user !== user) {
       $('#chat').append('<p class="notify">--> ' + data.user + ' joined</p>');
     }

@@ -70,7 +70,7 @@ io.sockets.on('connection', function(socket){
 
 var available = function(sid, user){
   console.log("available: " + user + " at " + sid);
-  io.sockets.sockets[sid].emit('welcome', {user: user, current_users: JSON.stringify(Object.keys(clients)), message: "Welcome " + user});
+  io.sockets.sockets[sid].emit('welcome', {user: user, message: "Welcome " + user, current_users: Object.keys(clients)});
 };
 
 var unavailable = function(sid, user){
