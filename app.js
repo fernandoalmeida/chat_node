@@ -38,68 +38,63 @@ var server = app.listen(app.get('port'), function(){
 });
 var io = socketio.listen(server);
 
-var clients = {};
-var sockets = {};
+var usernames   = {};
+var sockets_ids = {};
 
 io.sockets.on('connection', function(socket){
 
   // Login
-  socket.on('set username', function(user){
-    if (clients[user] === undefined) {
-      clients[user] = socket.id;
-      sockets[socket.id] = user;
-      available(socket.id, user);
-      join(user);
-    } else if (clients[user] == socket.id) {
-      ignore(socket.id, user);
+  socket.on('user_sign_in', function(data){
+    if (!sockets_ids[data.username]) {
+      usernames[socket.id]       = data.username;
+      sockets_ids[data.username] = socket.id;
+
+      socket.emit('sign_in_success', { username: data.username, message: "Welcome " + data.username, current_users: Object.keys(sockets_ids) });
+      socket.broadcast.emit('user_signed_in', { username: data.username });
+
+      console.log(data.username + ' signed in');
     } else {
-      unavailable(socket.id, user);
+      socket.emit('error', { error: 'sign_in_error', message: "username unavailable" });
+
+      console.log('sign in error: ' + data.username + ' already in use');
     }
   });
 
-  // Message
-  socket.on('message', function(data){
-    if ( data.target == 'all' ) {
-      io.sockets.emit('message', {
-	source:  data.source,
-	message: data.message,
-	target:  data.target
-      });
+  // Logout
+  socket.on('user_sign_out', function(){
+    socket.broadcast.emit('user_signed_out', { username: usernames[socket.id] });
+    
+    delete sockets_ids[usernames[socket.id]];
+    delete usernames[socket.id];
+
+    if (!usernames[socket.id]) {
+      socket.emit('sign_out_success');
+
+      console.log('user signed out');
     } else {
-      if (!!clients[data.target] && !!io.sockets.sockets[clients[data.target]]) {
-	io.sockets.sockets[clients[data.target]].emit('message', {
-	  source:  data.source,
-	  message: data.message,
-	  target:  data.target
-	});
+      socket.emit('error', { error: 'sign_out_error', message: "error on signout" });
+
+      console.log('user sign out error');
+    }
+  });
+  
+  // Message
+  socket.on('send_message', function(data){
+    if ( data.target == 'all' ) {
+      io.sockets.emit('receipt_public_message', { username:  usernames[socket.id], message: data.message });
+
+      console.log(usernames[socket.id] + ' sent a public message');
+    } else {
+      if (sockets_ids[data.target]) {
+	io.sockets.socket(sockets_ids[data.target]).emit('receipt_private_message', { username:  usernames[socket.id], message: data.message });
+
+	console.log(usernames[socket.id] + ' sent a private message to ' + data.target);
       } else {
-	io.sockets.sockets[clients[data.source]].emit('error', {not_found: true, message: "user not found"});
+	socket.emit('error', { error: 'user_not_found', message: "user not found" });
+
+	console.log('user ' + data.target + ' not found');
       }
     }
   });
 
 });
-
-var available = function(sid, user){
-  console.log("available: " + user + " at " + sid);
-  io.sockets.sockets[sid].emit('welcome', {user: user, message: "Welcome " + user, current_users: Object.keys(clients)});
-};
-
-var unavailable = function(sid, user){
-  console.log("unavailable: " + user + " at " + sid);
-  if (io.sockets.sockets[sid] != undefined) {
-    io.sockets.sockets[sid].emit('error', {unavailable: true, message: "username unavailable"});
-  }
-};
-
-var join = function(user){
-  Object.keys(sockets).forEach(function(sid){
-    if (io.sockets.sockets[sid]) {
-      io.sockets.sockets[sid].emit('joined', {user: user, notify: true});
-    }
-  });
-};
-
-var ignore = function(sid, user) {
-  console.log('ignore');
-};

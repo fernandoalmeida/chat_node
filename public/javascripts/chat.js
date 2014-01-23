@@ -1,39 +1,21 @@
 /* global io, $, console */
-var socket = io.connect("/");
-var user;
+var socket    = io.connect("/");
+var username  = null;
+var signed_in = false;
 
 $(document).ready(function(){
 
+  // Login
   $('#user').keypress(function(e){
     if (e.keyCode == 13) {
-      user = this.value;
-      socket.emit('set username', user, function(data){
-	console.log('emit set username', data);
-      });
-      e.stopPropagation();
-      e.preventDefault();
+      socket.emit('user_sign_in', {username: $(this).val()});
     }
   });
 
-  $('#message').keypress(function(e){
-    if (e.keyCode == 13) {
-      var target = $('#users').val();
-      var message = $(this).val();
-      socket.emit('message', {
-	source: user,
-	target: target,
-	message: message
-      });
-      $(this).val("");
-      if ( target != 'all' ) {
-	$('#chat').append("<p class='private'>" + user + ": " + message + "</p>");
-      }
-      e.stopPropagation();
-      e.preventDefault();
-    }
-  });
+  socket.on('sign_in_success', function(data){
+    username  = data.username;
+    signed_in = true;
 
-  socket.on('welcome', function(data){
     $("#feedback").html("<span style='color: green'>" + data.message + "</span>");
     $('input#message').prop('disabled', false);
     $('input#user').prop('disabled', true);
@@ -44,18 +26,64 @@ $(document).ready(function(){
     $('#users').append(options);
   });
 
-  socket.on('joined', function(data){
-    if (data.notify && data.user !== user) {
-      $('#chat').append('<p class="notify">--> ' + data.user + ' joined</p>');
-      $('#users').append('<option value="' + data.user + '">' + data.user + '</option>');
+  socket.on('user_signed_in', function(data){
+    if (signed_in) {
+      $('#chat').append('<p class="join">>>> ' + data.username + ' joined</p>');
+      $('#users').append('<option class="user" value="' + data.username + '">' + data.username + '</option>');
     }
   });
 
-  socket.on('message', function(data){
-    var css_class = data.target == 'all' ? 'public' : 'private';
-    $('#chat').append("<p class=" + css_class + ">" + data.source + ": " + data.message + "</p>");
+  // Logout
+  $('#exit').click(function(e){
+    socket.emit('user_sign_out');
+  });
+  
+  socket.on('sign_out_success', function(){
+    username  = null;
+    signed_in = false;
+
+    $("#feedback").html("<span style='color: green'>You left the chat</span>");
+    $('input#message').prop('disabled', true);
+    $('input#user').prop('disabled', false);
+    $('select#users').html('<option value="all">All</option>');
+    $('select#users').attr('disabled', false);
   });
 
+  socket.on('user_signed_out', function(data){
+    if (signed_in) {
+      $('#chat').append("<p class='left'><<< " + data.username + " left the chat</p>");
+      $("select#users option[value='" + data.username + "']").remove();
+    }
+  });
+
+  // Message
+  $('#message').keypress(function(e){
+    if (e.keyCode == 13) {
+      var target  = $('#users').val();
+      var message = $(this).val();
+      socket.emit('send_message', { target:  target, message: message });
+      $(this).val("");
+      if ( target != 'all' ) {
+	$('#chat').append("<p class='private'>" + username + ": " + message + "</p>");
+      }
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  });
+
+  socket.on('receipt_private_message', function(data){
+    if (signed_in) {
+      $('#chat').append("<p class='private'>" + data.username + ": " + data.message + "</p>");
+    }
+  });
+
+  socket.on('receipt_public_message', function(data){
+    if (signed_in) {
+      $('#chat').append("<p class='public'>" + data.username + ": " + data.message + "</p>");
+    }
+  });
+
+  // System
   socket.on('error', function(data) {
     $("#feedback").html("<span style='color: red'>" + data.message + "</span>");
   });
