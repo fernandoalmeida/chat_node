@@ -35,7 +35,11 @@ $(document).ready(function(){
 
   // Logout
   $('#exit').click(function(e){
-    socket.emit('user_sign_out');
+    if (signed_in) {
+      socket.emit('user_sign_out');
+    } else {
+      alert('You are not logged in.\n\n Please type your "nickname" and hit <Enter>');
+    }
   });
   
   socket.on('sign_out_success', function(){
