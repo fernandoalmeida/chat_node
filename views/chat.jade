@@ -5,25 +5,28 @@ block append head
   script(src="/javascripts/chat.js")
 
 block content
-  h1 Chat
-
-  div#fields
-    label(for="user") Username: (Hit Enter) 
-    input#user(type="text", size="30")
-    input#exit(type="button", value="exit", name="exit")
-    
-  div#feedback
- 
-  p
-  div#chat.shadow
- 
-  p
-  div
-    br
-    table
-      tr
-        td
-          select#users(style="width: 100px")
-            option(value="all") All
-        td
-          input#message(type="text", style="width: 600px", disabled="true")
+  .container
+    .row
+      .col-md-6
+        .panel.panel-primary
+          .panel-heading
+            .input-group
+              input#user.form-control.input-sm(type='text', placeholder='nickname...')
+              span.input-group-btn
+                button#send.btn.btn-success.btn-sm
+                  | Sign in
+              span.input-group-btn
+                button#exit.btn.btn-danger.btn-sm
+                  | Sign out
+          .panel-body
+            #chat.chat
+          .panel-footer
+            .form-inline
+              select#users.form-control.input-sm
+                option(value="all") All
+              .pull-right
+                .input-group
+                  input#message.form-control.input-sm(type='text', placeholder='Type your message here...')
+                  span.input-group-btn
+                    button#send.btn.btn-warning.btn-sm
+                      | Send
