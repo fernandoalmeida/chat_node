@@ -5,10 +5,27 @@ var signed_in = false;
 
 $(document).ready(function(){
 
+  check_fields();
+
   // Login
+  $("#signin").click(function(){
+    if (!signed_in) {
+      var nickname = $('#user').val();
+      if (nickname == "") {
+	alert('Please, type your nickname.');
+	check_fields();
+      } else {
+	socket.emit('user_sign_in', {username: $('#user').val()});
+      }
+    } else {
+      alert('You already is signed in as "' + username + '"');
+      check_fields();
+    }
+  });
+
   $('#user').keypress(function(e){
     if (e.keyCode == 13) {
-      socket.emit('user_sign_in', {username: $(this).val()});
+      $("#signin").trigger('click');
     }
   });
 
@@ -17,13 +34,12 @@ $(document).ready(function(){
     signed_in = true;
 
     $("#feedback").html("<span style='color: green'>" + data.message + "</span>");
-    $('input#message').prop('disabled', false);
-    $('input#user').prop('disabled', true);
     var options = "";
     for(var i = 0; i < data.current_users.length; i++) {
       options += '<option value="' + data.current_users[i] + '">' + data.current_users[i] + '</option>';
     }
     $('#users').append(options);
+    check_fields();
   });
 
   socket.on('user_signed_in', function(data){
@@ -34,11 +50,12 @@ $(document).ready(function(){
   });
 
   // Logout
-  $('#exit').click(function(e){
+  $('#signout').click(function(e){
     if (signed_in) {
       socket.emit('user_sign_out');
     } else {
       alert('You are not logged in.\n\n Please type your "nickname" and hit <Enter>');
+      check_fields();
     }
   });
   
@@ -47,10 +64,8 @@ $(document).ready(function(){
     signed_in = false;
 
     $("#feedback").html("<span style='color: green'>You left the chat</span>");
-    $('input#message').prop('disabled', true);
-    $('input#user').prop('disabled', false);
     $('select#users').html('<option value="all">All</option>');
-    $('select#users').attr('disabled', false);
+    check_fields();
   });
 
   socket.on('user_signed_out', function(data){
@@ -63,15 +78,22 @@ $(document).ready(function(){
   // Message
   $('#message').keypress(function(e){
     if (e.keyCode == 13) {
-      var target  = $('#users').val();
-      var message = $(this).val();
+      $('#send').trigger("click");
+    }
+  });
+
+  $('#send').click(function(e){
+    var target  = $('#users').val();
+    var message = $('#message').val();
+    if (message != "")  {
       socket.emit('send_message', { target:  target, message: message });
-      $(this).val("");
+      $("#message").val("").focus();
       if ( target != 'all' ) {
 	$('#chat').append("<p class='private'>" + username + ": " + message + "</p>");
       }
-      e.stopPropagation();
-      e.preventDefault();
+    } else {
+      alert('Please, type your message.');      
+      $("#message").focus();
     }
   });
 
@@ -92,4 +114,22 @@ $(document).ready(function(){
     $("#feedback").html("<span style='color: red'>" + data.message + "</span>");
   });
 
+  function check_fields() {
+    $("#user").prop("disabled", signed_in);
+    $("#signin").prop("disabled", signed_in);
+
+    $("#users").prop("disabled", !signed_in);
+    $("#signout").prop("disabled", !signed_in);
+    $("#message").prop("disabled", !signed_in);
+    $("#send").prop("disabled", !signed_in);
+
+    if (signed_in) {
+      $("#message").focus();
+    } else {
+      $("#user").focus();
+    }
+
+  }
+
 });
+
