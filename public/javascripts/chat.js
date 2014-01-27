@@ -5,6 +5,7 @@ var signed_in = false;
 
 $(document).ready(function(){
 
+  feedback("Welcome to the Chat!", "info");
   check_fields();
 
   // Login
@@ -12,13 +13,13 @@ $(document).ready(function(){
     if (!signed_in) {
       var nickname = $('#user').val();
       if (nickname == "") {
-	alert('Please, type your nickname.');
+	feedback('Please, type your nickname.', 'danger');
 	check_fields();
       } else {
 	socket.emit('user_sign_in', {username: $('#user').val()});
       }
     } else {
-      alert('You already is signed in as "' + username + '"');
+      feedback('You already is signed in as "' + username + '"', 'danger');
       check_fields();
     }
   });
@@ -33,7 +34,7 @@ $(document).ready(function(){
     username  = data.username;
     signed_in = true;
 
-    $("#feedback").html("<span style='color: green'>" + data.message + "</span>");
+    feedback(data.message, "success");
     var options = "";
     for(var i = 0; i < data.current_users.length; i++) {
       options += '<option value="' + data.current_users[i] + '">' + data.current_users[i] + '</option>';
@@ -54,7 +55,7 @@ $(document).ready(function(){
     if (signed_in) {
       socket.emit('user_sign_out');
     } else {
-      alert('You are not logged in.\n\n Please type your "nickname" and hit <Enter>');
+      feedback('You are not logged in.\n\n Please type your "nickname" and hit <Enter>', 'danger');
       check_fields();
     }
   });
@@ -63,8 +64,10 @@ $(document).ready(function(){
     username  = null;
     signed_in = false;
 
-    $("#feedback").html("<span style='color: green'>You left the chat</span>");
+    feedback("You left the chat", "success");
     $('select#users').html('<option value="all">All</option>');
+    $('#user').val('');
+    $('#chat').empty();
     check_fields();
   });
 
@@ -92,7 +95,7 @@ $(document).ready(function(){
 	$('#chat').append("<p class='private'>" + username + ": " + message + "</p>");
       }
     } else {
-      alert('Please, type your message.');      
+      feedback('Please, type your message.', 'danger');      
       $("#message").focus();
     }
   });
@@ -111,7 +114,7 @@ $(document).ready(function(){
 
   // System
   socket.on('error', function(data) {
-    $("#feedback").html("<span style='color: red'>" + data.message + "</span>");
+    feedback(data.message, "danger");
   });
 
   function check_fields() {
@@ -129,6 +132,16 @@ $(document).ready(function(){
       $("#user").focus();
     }
 
+  }
+
+  function feedback(message, type) {
+    var element = '<div class="alert alert-dismissable alert-'+type+'">' +
+                  '  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>' +
+                     message +
+                  '</div>';
+    $("#feedback").show().html(element).fadeOut(2500, function(){
+      $("#feedback").hide().html("");
+    });
   }
 
 });

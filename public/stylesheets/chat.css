@@ -64,3 +64,12 @@
 #message {
     width: 340px;
 }
+
+.panel {
+    position: absolute;
+    top: 80px;
+}
+
+.col-md-6.center-block {
+    float: none;
+}
